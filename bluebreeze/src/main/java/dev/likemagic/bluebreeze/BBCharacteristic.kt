@@ -10,16 +10,12 @@ import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.os.Build
 import androidx.annotation.RequiresApi
-import dev.likemagic.bluebreeze.flows.MutableSharedStateFlow
+import dev.likemagic.bluebreeze.observables.MutableSharedStateFlow
 import dev.likemagic.bluebreeze.operations.BBOperationQueue
 import dev.likemagic.bluebreeze.operations.BBOperationRead
 import dev.likemagic.bluebreeze.operations.BBOperationSubscribe
 import dev.likemagic.bluebreeze.operations.BBOperationUnsubscribe
 import dev.likemagic.bluebreeze.operations.BBOperationWrite
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 
 /**
  * A GATT characteristic belonging to one of a [BBDevice]'s discovered [BBService]s. You never
@@ -64,26 +60,19 @@ class BBCharacteristic internal constructor(
 
     // endregion
 
-    // region Data properties
+    // region Observable properties
 
-    /** The characteristic's most recent value and its data stream. Replays the last value on subscription.
-     *  Empty by default. */
+    /**
+     * The characteristic's most recently read or notified value. Empty until [read] or
+     * [subscribe] has been called and returned/notified at least once, and reset to empty on
+     * disconnect. Use `data.updates` to receive only the values that arrive from now on.
+     */
     private val _data = MutableSharedStateFlow(byteArrayOf())
-    val data: StateFlow<ByteArray> get() = _data
-
-    // endregion
-
-    // region Notification properties
+    val data: BBObservable<ByteArray> get() = _data
 
     /** Whether [subscribe] has been called without a matching [unsubscribe] since. */
     private val _isNotifying = MutableSharedStateFlow(false)
-    val isNotifying: StateFlow<Boolean> get() = _isNotifying
-
-    /** The characteristic's data stream. Does not replay the last value. */
-    private val _notifications = MutableSharedFlow<ByteArray>(
-        extraBufferCapacity = 16,
-    )
-    val notifications: Flow<ByteArray> get() = _notifications.asSharedFlow()
+    val isNotifying: BBObservable<Boolean> get() = _isNotifying
 
     // endregion
 
@@ -180,7 +169,6 @@ class BBCharacteristic internal constructor(
         gatt ?: return
         characteristic ?: return
 
-        _notifications.tryEmit(characteristic.value ?: byteArrayOf())
         _data.emit(characteristic.value ?: byteArrayOf())
     }
 
@@ -190,7 +178,6 @@ class BBCharacteristic internal constructor(
         characteristic: BluetoothGattCharacteristic,
         value: ByteArray
     ) {
-        _notifications.tryEmit(value)
         _data.emit(value)
     }
 

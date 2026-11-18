@@ -5,13 +5,14 @@
 [![Platform](https://img.shields.io/badge/platform-Android-lightgrey.svg)](build.gradle.kts)
 
 BlueBreeze is a modern Bluetooth LE library for Android, built on Kotlin coroutines and
-`StateFlow`/`SharedFlow` for all data streams. It wraps Android's callback-based
+`Flow` for all data streams. It wraps Android's callback-based
 `BluetoothGatt`/`BluetoothLeScanner` APIs with `suspend` operations and serial per-device request
 queuing, so you don't have to hand-write connection state machines or worry about overlapping BLE
 requests.
 
 - **Coroutines-first** -- every state (adapter power, authorization, discovered devices, connection 
-  status, characteristic data, ...) is a `StateFlow` or `SharedFlow` you can collect reactively.
+  status, characteristic data, ...) is a `BBObservable`: read its current `value`, collect its
+  `values` (the current value, then new ones), or collect only its `updates`.
 - **`suspend` operations** -- connect, discover services, read, write, and subscribe/unsubscribe
   are all `suspend` calls with a built-in timeout, GATT callbacks are abstracted.
 - **Automatic per-device request queuing** -- operations on the same device are serialized in call
@@ -63,7 +64,7 @@ if (manager.authorizationStatus.value != BBAuthorization.authorized) {
 }
 
 lifecycleScope.launch {
-    manager.state.collect { state ->
+    manager.state.values.collect { state ->
         if (state == BBState.poweredOn) {
             manager.scanStart(context)
         }
@@ -97,6 +98,30 @@ lifecycleScope.launch {
     device.disconnect()
 }
 ```
+
+### Observing state
+
+Every piece of state is a `BBObservable`, which you can query in three ways:
+
+```kotlin
+characteristic.data.value                       // the current value
+characteristic.data.values.collect { data -> }  // the current value, then new values
+characteristic.data.updates.collect { data -> } // only values that arrive from now on
+```
+
+For example, to receive notifications:
+
+```kotlin
+lifecycleScope.launch {
+    characteristic.data.updates.collect { data ->
+        println("${characteristic.uuid} $data")
+    }
+}
+characteristic.subscribe()
+```
+
+In Jetpack Compose, use
+`observable.values.collectAsStateWithLifecycle(initialValue = observable.value)`.
 
 Call `manager.close()` when you're done with it (e.g. in `onDestroy`) to unregister the broadcast
 receivers `BBManager` registers for its lifetime.
