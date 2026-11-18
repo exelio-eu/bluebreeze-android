@@ -71,19 +71,9 @@ class BBCharacteristic internal constructor(
     private val _data = MutableSharedStateFlow(byteArrayOf())
     val data: StateFlow<ByteArray> get() = _data
 
-    // endregion
-
-    // region Notification properties
-
     /** Whether [subscribe] has been called without a matching [unsubscribe] since. */
     private val _isNotifying = MutableSharedStateFlow(false)
     val isNotifying: StateFlow<Boolean> get() = _isNotifying
-
-    /** The characteristic's data stream. Does not replay the last value. */
-    private val _notifications = MutableSharedFlow<ByteArray>(
-        extraBufferCapacity = 16,
-    )
-    val notifications: Flow<ByteArray> get() = _notifications.asSharedFlow()
 
     // endregion
 
