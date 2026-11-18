@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.Flow
  * `BBDevice.connectionStatus`, `BBCharacteristic.data`, and so on).
  *
  * ```kotlin
- * characteristic.data.value                               // the current value
- * characteristic.data.updates.collect { }                // only new values
- * characteristic.data.values.collect { }   // the current value, then new values
+ * characteristic.data.value                 // the current value
+ * characteristic.data.values.collect { }     // the current value, then new values
+ * characteristic.data.updates.collect { }    // only new values
  * ```
  */
 interface BBObservable<T> {
