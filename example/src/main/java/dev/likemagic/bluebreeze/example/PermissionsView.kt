@@ -30,7 +30,7 @@ fun PermissionsView(
 ) {
     val context = navController.context
 
-    val authorizationStatus = viewModel.manager.authorizationStatus.collectAsStateWithLifecycle()
+    val authorizationStatus = viewModel.manager.authorizationStatus.values.collectAsStateWithLifecycle(initialValue = viewModel.manager.authorizationStatus.value)
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Column(
             modifier = Modifier

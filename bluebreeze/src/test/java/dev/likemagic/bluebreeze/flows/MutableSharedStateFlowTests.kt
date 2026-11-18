@@ -6,6 +6,7 @@
 package dev.likemagic.bluebreeze.flows
 
 import app.cash.turbine.test
+import dev.likemagic.bluebreeze.observables.MutableSharedStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runCurrent
@@ -31,17 +32,17 @@ class MutableSharedStateFlowTests {
         flow.emit("first")
         flow.emit("second")
 
-        flow.test {
+        flow.values.test {
             assertEquals("second", awaitItem())
         }
     }
 
     @Test
-    fun `an active subscriber sees every value emitted after it starts collecting`() = runTest {
+    fun `a values subscriber sees the current value and every value emitted after it starts collecting`() = runTest {
         val flow = MutableSharedStateFlow(0)
         val collected = mutableListOf<Int>()
 
-        val job = launch { flow.toList(collected) }
+        val job = launch { flow.values.toList(collected) }
         runCurrent()
 
         flow.emit(1)
@@ -56,11 +57,23 @@ class MutableSharedStateFlowTests {
     }
 
     @Test
-    fun `replayCache always contains exactly the current value`() {
+    fun `an updates subscriber only sees values emitted after it starts collecting`() = runTest {
         val flow = MutableSharedStateFlow(0)
+        val collected = mutableListOf<Int>()
 
-        flow.emit(42)
+        flow.emit(1)
 
-        assertEquals(listOf(42), flow.replayCache)
+        val job = launch { flow.updates.toList(collected) }
+        runCurrent()
+
+        flow.emit(2)
+        runCurrent()
+
+        flow.emit(3)
+        runCurrent()
+
+        job.cancel()
+
+        assertEquals(listOf(2, 3), collected)
     }
 }

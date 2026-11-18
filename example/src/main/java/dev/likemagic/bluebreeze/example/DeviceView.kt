@@ -56,10 +56,10 @@ fun DeviceView(
     navController: NavController,
     device: BBDevice,
 ) {
-    val connectionStatus = device.connectionStatus.collectAsStateWithLifecycle()
-    var connectionOperation = remember { mutableStateOf(false) }
+    val connectionStatus = device.connectionStatus.values.collectAsStateWithLifecycle(initialValue = device.connectionStatus.value)
+    val connectionOperation = remember { mutableStateOf(false) }
 
-    val services = device.services.collectAsStateWithLifecycle()
+    val services = device.services.values.collectAsStateWithLifecycle(initialValue = device.services.value)
 
     Scaffold(
         topBar = {
@@ -182,8 +182,8 @@ fun CharacteristicView(
     navController: NavController,
     characteristic: BBCharacteristic,
 ) {
-    val data = characteristic.data.collectAsStateWithLifecycle()
-    val isNotifying = characteristic.isNotifying.collectAsStateWithLifecycle()
+    val data = characteristic.data.values.collectAsStateWithLifecycle(initialValue = characteristic.data.value)
+    val isNotifying = characteristic.isNotifying.values.collectAsStateWithLifecycle(initialValue = characteristic.isNotifying.value)
 
     val canRead = characteristic.properties.contains(BBCharacteristicProperty.read)
     val canWriteWithResponse = characteristic.properties.contains(BBCharacteristicProperty.writeWithResponse)

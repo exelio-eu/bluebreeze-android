@@ -14,7 +14,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import dev.likemagic.bluebreeze.flows.MutableSharedStateFlow
+import dev.likemagic.bluebreeze.observables.MutableSharedStateFlow
 import dev.likemagic.bluebreeze.operations.BBOperation
 import dev.likemagic.bluebreeze.operations.BBOperationConnect
 import dev.likemagic.bluebreeze.operations.BBOperationDisconnect
@@ -26,7 +26,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
@@ -88,7 +87,7 @@ class BBDevice internal constructor(
     private val _services = MutableSharedStateFlow(emptyList<BBService>())
 
     /** Services discovered so far. Empty until [discoverServices] has been called and completed. */
-    val services: StateFlow<List<BBService>> get() = _services
+    val services: BBObservable<List<BBService>> get() = _services
 
     // endregion
 
@@ -101,7 +100,7 @@ class BBDevice internal constructor(
      * unexpected link loss (including the whole Bluetooth adapter powering off) -- you don't
      * need to poll it after calling [connect]/[disconnect].
      */
-    val connectionStatus: StateFlow<BBDeviceConnectionStatus> get() = _connectionStatus
+    val connectionStatus: BBObservable<BBDeviceConnectionStatus> get() = _connectionStatus
 
     // endregion
 
@@ -110,7 +109,7 @@ class BBDevice internal constructor(
     private val _mtu = MutableSharedStateFlow(BBConstants.DEFAULT_MTU)
 
     /** The negotiated ATT MTU in bytes -- the largest amount of data that fits in a single read/write. [BBConstants.DEFAULT_MTU] (23) until [requestMtu] is called and awaited. */
-    val mtu: StateFlow<Int> get() = _mtu
+    val mtu: BBObservable<Int> get() = _mtu
 
     // endregion
 
