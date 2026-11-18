@@ -29,10 +29,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import dev.likemagic.bluebreeze.flows.MutableSharedStateFlow
+import dev.likemagic.bluebreeze.observables.MutableSharedStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import androidx.core.content.edit
@@ -66,7 +65,7 @@ class BBManager(
     private val _authorizationStatus = MutableSharedStateFlow(BBAuthorization.unknown)
 
     /** The app's current authorization status for the Bluetooth permissions BlueBreeze needs. Call [authorizationRequest] to request them if this isn't [BBAuthorization.authorized]. */
-    val authorizationStatus: StateFlow<BBAuthorization> get() = _authorizationStatus
+    val authorizationStatus: BBObservable<BBAuthorization> get() = _authorizationStatus
 
     private val authorizationPermissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         arrayOf(
@@ -243,7 +242,7 @@ class BBManager(
     private val _state = MutableSharedStateFlow(BBState.unknown)
 
     /** The Bluetooth adapter's current power state. Scanning and connecting require [BBState.poweredOn]. */
-    val state: StateFlow<BBState> get() = _state
+    val state: BBObservable<BBState> get() = _state
 
     init {
         _state.emit(stateCheck(context))
@@ -286,7 +285,7 @@ class BBManager(
      * connect, and disconnect -- use this (or [BBScanResult.device]) rather than constructing
      * your own.
      */
-    val devices: StateFlow<Map<String, BBDevice>> get() = _devices
+    val devices: BBObservable<Map<String, BBDevice>> get() = _devices
 
     // Guards the access to the devices map
     private val devicesLock = Any()
@@ -298,14 +297,14 @@ class BBManager(
     private val _scanEnabled = MutableSharedStateFlow(false)
 
     /** Whether a scan is currently active. Reflects [scanStart]/[scanStop], and flips to `false` on its own if the adapter powers off or the system stops the scan for another reason. */
-    val scanEnabled: StateFlow<Boolean> get() = _scanEnabled
+    val scanEnabled: BBObservable<Boolean> get() = _scanEnabled
 
     private val _scanResults = MutableSharedFlow<BBScanResult>(
         extraBufferCapacity = 16,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    /** Every advertisement seen while scanning, including repeats from the same peripheral. Only delivered to collectors while they're actively collecting -- there's no replay, unlike [devices]/[state]. */
+    /** Every advertisement seen while scanning, including repeats from the same peripheral. Only delivered to collectors while they're actively collecting, there's no replay. */
     val scanResults: SharedFlow<BBScanResult> get() = _scanResults
 
     private val scanTimes: MutableList<Long> = ArrayList()
@@ -349,8 +348,8 @@ class BBManager(
                 setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && supportsExtended) {
-                setLegacy(false)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                setLegacy(!supportsExtended)
             }
         }.build()
 

@@ -32,7 +32,7 @@ class MainViewModel(
         manager.close()
     }
 
-    val authorizationStatus = manager.authorizationStatus.stateIn(
+    val authorizationStatus = manager.authorizationStatus.values.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = BBAuthorization.unknown,
@@ -40,13 +40,13 @@ class MainViewModel(
 
     val supportsExtended: Boolean = manager.supportsExtended
 
-    val state = manager.state.stateIn(
+    val state = manager.state.values.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = BBState.unknown,
     )
 
-    val scanEnabled = manager.scanEnabled.stateIn(
+    val scanEnabled = manager.scanEnabled.values.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = false,
